@@ -259,15 +259,6 @@
     }
   }
 
-  function ageFrom(d){
-    var now=new Date(), y=now.getFullYear()-d.getFullYear(),
-        m=now.getMonth()-d.getMonth(), day=now.getDate()-d.getDate();
-    if(day<0){ m--; }
-    if(m<0){ y--; m+=12; }
-    var days=Math.floor((now-d)/86400000);
-    return {years:y, months:m, days:days};
-  }
-
   dob.addEventListener('input', function(){
     var v=dob.value; go1.disabled=!v;
     if(!v){ hint.textContent=''; return; }
@@ -278,15 +269,16 @@
 
   go1.addEventListener('click', function(){
     var d=new Date(dob.value+'T00:00:00');
-    var a=ageFrom(d);
-    var n=Math.max(0,a.years);
+    // A birthday card shows the birthday being CELEBRATED this year, not the
+    // years completed so far - the day before the party still reads "1".
+    var n=new Date().getFullYear()-d.getFullYear();
+    if(n<1){ n=1; }
     document.getElementById('ageNum').textContent = n;
     var w = WORDS[n] || String(n);
     document.getElementById('ageLine').textContent =
-      n===0 ? (a.days===1 ? '1 day of you' : a.days+' days of you')
-            : (n===1 ? 'one whole year of you' : w+' whole years of you');
+      n===1 ? 'one whole year of you' : w+' whole years of you';
     document.getElementById('msgTop').innerHTML =
-      (n===1?'One whole year of you.':n===0?'Your very first birthday.':n+' whole years of you.')+
+      (n===1?'One whole year of you.':n+' whole years of you.')+
       '<br>Of tiny socks that go missing,<br>of that laugh out of nowhere,<br>of mornings that start far too early and are worth it every single time.';
     try{ localStorage.setItem('evan-dob', dob.value); }catch(e){}
     if(window.EvanMusic){ window.EvanMusic.start(); }
