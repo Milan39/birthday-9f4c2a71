@@ -34,10 +34,21 @@
   .eyebrow{font-size:12px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--mute)}
   .rule{display:flex;align-items:center;gap:12px}
   .rule i{display:block;width:26px;height:2px;background:var(--gold);border-radius:1px}
-  input[type=date]{font:500 17px/1.2 'Karla',sans-serif;color:var(--ink);background:#fff;
-    border:2px solid var(--line);border-radius:14px;padding:14px 16px;width:100%;max-width:280px;
-    min-height:52px;text-align:center;appearance:none}
-  input[type=date]:focus{outline:none;border-color:var(--gold)}
+  .field{display:flex;flex-direction:column;align-items:center;gap:9px;width:100%;max-width:290px}
+  .field .lab{font-family:'Karla','Helvetica Neue',sans-serif;font-weight:500;font-size:12px;
+    letter-spacing:.2em;text-transform:uppercase;color:var(--mute)}
+  .datebox{position:relative;width:100%}
+  .datebox svg{position:absolute;right:15px;top:50%;transform:translateY(-50%);width:19px;height:19px;
+    stroke:var(--mute);fill:none;stroke-width:1.7;stroke-linecap:round;pointer-events:none}
+  input[type=date]{
+    font-family:'Karla','Helvetica Neue',sans-serif;font-weight:500;font-size:17px;line-height:1.2;
+    color:var(--ink);-webkit-text-fill-color:var(--ink);opacity:1;
+    background:#fff;border:2px solid var(--line);border-radius:14px;
+    padding:15px 44px 15px 16px;width:100%;min-height:56px;text-align:center;
+    -webkit-appearance:none;appearance:none;display:block}
+  input[type=date]::-webkit-date-and-time-value{text-align:center;color:var(--ink)}
+  input[type=date]::-webkit-calendar-picker-indicator{opacity:0;width:100%;left:0;position:absolute;height:100%}
+  input[type=date]:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(217,149,19,.15)}
   button{font:500 16px/1 'Karla',sans-serif;color:var(--cream);background:var(--gold);
     border:none;border-radius:999px;padding:0 30px;min-height:52px;cursor:pointer;
     letter-spacing:.02em;transition:transform .18s ease,filter .18s ease;
@@ -71,10 +82,10 @@
   .dots{display:flex;gap:7px;justify-content:center;padding:0 0 18px;position:relative;z-index:4}
   .dots i{width:7px;height:7px;border-radius:50%;background:var(--line);transition:background .4s}
   .dots i.on{background:var(--gold)}
-  .snd{position:absolute;top:14px;right:14px;z-index:6;width:40px;height:40px;min-height:40px;
-    padding:0;border-radius:50%;background:rgba(251,246,236,.82);backdrop-filter:blur(6px);
-    border:1.5px solid var(--line);box-shadow:none;display:none;align-items:center;justify-content:center}
-  .snd.show{display:flex}
+  .snd{position:absolute;top:14px;right:14px;z-index:6;width:44px;height:44px;min-height:44px;
+    padding:0;border-radius:50%;background:rgba(251,246,236,.86);backdrop-filter:blur(6px);
+    border:1.5px solid var(--line);box-shadow:none;display:flex;align-items:center;justify-content:center}
+  .snd{display:flex}
   .snd:hover{filter:none;transform:none;background:#fff}
   .snd svg{width:19px;height:19px;stroke:var(--ink);fill:none;stroke-width:1.7;
     stroke-linecap:round;stroke-linejoin:round}
@@ -108,7 +119,13 @@
     <section class="screen on" id="s1">
       <div class="script">before you come in&hellip;</div>
       <h1 class="display" style="font-size:clamp(26px,6.6vw,32px);max-width:300px">When was Evan born?</h1>
-      <input type="date" id="dob" aria-label="Evan's date of birth" max="2100-12-31">
+      <div class="field">
+        <span class="lab" id="dobLab">day / month / year</span>
+        <div class="datebox">
+          <input type="date" id="dob" aria-labelledby="dobLab" placeholder="dd/mm/yyyy" max="2100-12-31">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        </div>
+      </div>
       <button id="go1" disabled>Open the card</button>
       <div class="eyebrow" id="hint" style="min-height:16px"></div>
     </section>
@@ -154,11 +171,13 @@
     ['G4',.5],['G4',.5],['G5',1],['E5',1],['C5',1],['B4',2],
     ['F5',.5],['F5',.5],['E5',1],['C5',1],['D5',1],['C5',2]
   ];
-  var BEAT=0.46, VOL=0.5;
+  var BEAT=0.46, VOL=0.85;
   var ctx,bus,master,timer,started=false,muted=false;
   var btn=document.getElementById('snd');
 
   function init(){
+    // iOS 16.4+: 'playback' makes Web Audio ignore the phone's silent switch
+    try{ if(navigator.audioSession){ navigator.audioSession.type='playback'; } }catch(e){}
     ctx=new AC();
     var filt=ctx.createBiquadFilter(); filt.type='lowpass'; filt.frequency.value=3400;
     master=ctx.createGain(); master.gain.value=VOL;
@@ -170,7 +189,7 @@
     o.type='triangle'; o.frequency.value=f;
     o2.type='sine';    o2.frequency.value=f*2; g2.gain.value=.22;
     g.gain.setValueAtTime(.0001,t);
-    g.gain.exponentialRampToValueAtTime(.26,t+.014);
+    g.gain.exponentialRampToValueAtTime(.34,t+.014);
     g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(dur*.96,.5));
     o.connect(g); o2.connect(g2); g2.connect(g); g.connect(bus);
     o.start(t); o2.start(t); o.stop(t+dur+.7); o2.stop(t+dur+.7);
@@ -206,12 +225,18 @@
       if(ctx.state==='suspended'){ ctx.resume(); }
       loop();
     }catch(e){ /* audio unavailable - the card still works in silence */ }
-    btn.classList.add('show');
   }
   document.addEventListener('visibilitychange',function(){
     if(!ctx){ return; }
     if(document.hidden){ ctx.suspend(); } else if(started && !muted){ ctx.resume(); }
   });
+  document.addEventListener('pointerdown',function once(e){
+    // the sound button starts the music through its own handler - if we also
+    // started it here, that first tap would start and instantly mute it
+    if(btn && btn.contains(e.target)){ return; }
+    document.removeEventListener('pointerdown',once);
+    start();
+  },{passive:true});
   window.EvanMusic={start:start};
 })();
 
